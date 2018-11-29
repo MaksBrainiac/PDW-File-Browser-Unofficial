@@ -103,7 +103,7 @@ div#files table#details td.icon span.folder{ background-image: url(skins/cuperti
 div#file-specs {background-image:url(skins/cupertino/images/file-spec-back.png);}
 div#file-specs form#fileform input { border-color:#999;}
 div#file-specs #info div {color:#000;}
-div#file-specs #info div span {color: #555;}
+div#file-specs #info div span {color: #555; text-align: left;}
 div#file-specs #info div.icon.folder{ background-image: url(phpthumb/phpThumb.php?h=140&w=140&src=../skins/cupertino/images/256/folder.png&far=1&bg=0000FF);}
 div#file-specs #info div.filename input {border-color:transparent; color: #555;}
 div#file-specs #info div.filename input:hover {border-color:#ccc;}

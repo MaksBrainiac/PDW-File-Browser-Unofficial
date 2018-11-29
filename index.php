@@ -1,10 +1,12 @@
 <?php
 /*
-PDW File Browser v1.3 beta
+PDW File Browser v1.4+
 Date: October 19, 2010
+Date: June 24, 2018
 Url: http://www.neele.name
 
 Copyright (c) 2010 Guido Neele
+Copyright (c) 2018 Maks T.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +26,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-ob_start( 'ob_gzhandler' );
+
+//ob_start( 'ob_gzhandler' );
+ob_start();
 
 define('MINIFY_CACHE_DIR', dirname(__FILE__) . '/cache');
 
@@ -51,7 +55,7 @@ if(!empty($_REQUEST['skin'])) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>PDW File Browser v1.3 (beta)</title>
+<title>PDW File Browser v1.4+</title>
 <link rel="shortcut icon" href="mediabrowser.ico" />
 <script type="text/javascript">
 //<![CDATA[
@@ -73,7 +77,11 @@ $minifyCSS = new Minify(TYPE_CSS);
 $minifyJS = new Minify(TYPE_JS);
 
 // Specify the files to be minified.
-$cssFiles = array('css/mediabrowser.css');
+$cssFiles = array(
+    'css/mediabrowser.css',
+    'css/flow.css',
+    'css/buttons.css',
+);
 
 // Only load skin if $_GET["skin"] or $defaultSkin is set.
 if ($skin != ""):
@@ -83,13 +91,10 @@ endif;
 $minifyCSS->addFile($cssFiles);
 
 $jsFiles = array(
-    'js/jquery.js',
+    'js/jqueryx.js',
     'js/jquery.mediabrowser.js',
     'js/jquery.plugins.js',
-    'swfupload/swfupload.min.js',
-    'swfupload/plugins/swfupload.queue.js',
-    'swfupload/fileprogress.js',
-    'swfupload/handlers.js'
+    'js/flow.min.js',
 );
 
 //If editor is TinyMCE then add javascript file
@@ -114,7 +119,6 @@ echo '</style>';
 
 <script type="text/javascript">
 //<![CDATA[
-var swfu;
 var foldercmenu;
 var filecmenu;
 var imagecmenu;
@@ -378,55 +382,231 @@ $(document).ready(function() {
 
 
     <?php if($allowedActions['upload'] === TRUE): ?>
-    // *** SWFUpload ***//
-    // Upload configuration
-    var settings = {
-            flash_url: "swfupload/swfupload.swf",
-            upload_url: "swfupload/upload.php",
-            post_params: {
-                "PHPSESSID": "<?php echo session_id(); ?>",
-                "uploadpath": "<?php echo rawurlencode($uploadpath); ?>"
-            },
-            file_size_limit: "<?php echo $max_file_size_in_bytes/(1024*1024); ?> MB",
-            file_types: "<?php echo '*.' . str_replace(';', ';*.', str_replace(',', ';', str_replace(' ', '', $extension_whitelist))); ?>",
-            file_types_description: "All Files",
-            file_upload_limit: 100,
-            file_queue_limit: 0,
-            custom_settings: {
-				progressTarget : "fsUploadProgress",
-                cancelButtonId : "btnCancel"
-            },
-            debug: false,
 
-            // Button settings
-            button_width: "175",
-            button_height: "20",
-            button_window_mode: "transparent",
-            button_placeholder_id: "spanButtonPlaceHolder",
-            button_text: '<span class="browseButton"><?php echo translate("Browse..."); ?></span>',
-            button_text_style: ".browseButton {font-family:sans-serif; color:#000000; font-size:14px; font-weight: bold;}",
-            button_cursor: SWFUpload.CURSOR.HAND,
-            button_text_top_padding: 1,
+        (function () {
+            var r = new Flow({
+                target: 'filesaver/upload.php',
+                query: $.MediaBrowser.qObject,
+                chunkSize: 1024*1024,
+                testChunks: false
+            });
 
-            // The event handler functions are defined in handlers.js
-            swfupload_loaded_handler : swfUploadLoaded,
-            file_queued_handler : fileQueued,
-	        file_queue_error_handler : fileQueueError,
-	        file_dialog_complete_handler : fileDialogComplete,
-	        upload_start_handler : uploadStart,
-	        upload_progress_handler : uploadProgress,
-	        upload_error_handler : uploadError,
-	        upload_success_handler : uploadSuccess,
-	        upload_complete_handler : uploadComplete,
-	        queue_complete_handler : queueComplete, // Queue plugin event
-	        
-	        // SWFObject settings
-	        minimum_flash_version : "9.0.28",
-	        swfupload_pre_load_handler : swfUploadPreLoad,
-	        swfupload_load_failed_handler : swfUploadLoadFailed
-	};
+            // Flow.js isn't supported, fall back on a different method
+            if (!r.support) {
+                $('.flow-error').show();
+                $('.flow-controls').hide();
+                return ;
+            }
+            $('.flow-error').hide();
 
-    swfu = new SWFUpload(settings);
+            var mainCounter = 0;
+            $('#main').on('dragenter', function(){
+                mainCounter++;
+                $(this).addClass('files-flow-dragover');
+            });
+            $('#main').on('dragend', function(){
+                $(this).removeClass('files-flow-dragover');
+            });
+            $('#main').on('dragleave', function(){
+                mainCounter--;
+                if (mainCounter === 0) {
+                    $(this).removeClass('files-flow-dragover');
+                }
+            });
+            $('#main').on('drop', function(){
+                $(this).removeClass('files-flow-dragover');
+            });
+
+            r.assignDrop($('#main')[0]);
+            r.assignBrowse($('#browse')[0]);
+
+            r.on('fileRemoved', function(file){
+                if ($('.flow-file').length == 0)
+                    $('.flow-progress, .flow-list').hide();
+            });
+
+            // Handle file add event
+            r.on('fileAdded', function(file){
+                $.MediaBrowser.showLayer('upload');
+
+                // Show progress bar
+                $('.flow-progress, .flow-list').show();
+
+                $('.flow-progress .progress-resume-link').hide();
+                $('.flow-progress .progress-pause-link').hide();
+                $('.flow-progress .progress-cancel-link').hide();
+
+                var splitName = file.name.split(".");
+                var ext = splitName.pop();
+
+                // Add the file to the list
+                $('.flow-list').append(
+                    '<li class="flow-file clearfix flow-file-'+file.uniqueIdentifier+'">' +
+                    '<div class="flow-file-progress">' +
+                    '<div class="progress-container"><div class="file-progress-bar"></div></div>' +
+                    '</div> ' +
+                    '<span class="icon"><span class="' + ext + '"></span></span> ' +
+                    '<div class="flow-file-name"></div>' +
+                    '<div class="flow-file-size"></div> ' +
+                    '<div class="flow-file-actions">' +
+                    '<a href="#" title="Resume upload" class="flow-file-resume"><i class="icon-play"></i></a>' +
+                    '<a href="#" title="Pause upload" class="flow-file-pause"><i class="icon-pause"></i></a>' +
+                    '<a href="#" title="Cancel upload" class="flow-file-cancel"><i class="icon-stop"></i></a>' +
+                    '<a href="#" title="Delete upload" class="flow-file-delete"><i class="icon-stop"></i></a>' +
+                    '</div>' +
+                    '<div class="flow-file-status"></div> ' +
+                    '</li>'
+                );
+
+                var $self = $('.flow-file-'+file.uniqueIdentifier);
+                $self.find('.flow-file-name').text(file.name);
+                $self.find('.flow-file-size').text(readablizeBytes(file.size));
+                //$self.find('.flow-file-download').attr('href', '/download/' + file.uniqueIdentifier).hide();
+                $self.find('.flow-file-pause').on('click', function ($event) {
+                    $event.preventDefault();
+                    $self.find('.flow-file-pause').hide();
+                    $self.find('.flow-file-resume').show();
+                    file.pause();
+                });
+                $self.find('.flow-file-resume').on('click', function ($event) {
+                    $event.preventDefault();
+                    $self.find('.flow-file-pause').show();
+                    $self.find('.flow-file-resume').hide();
+                    if (file.paused)
+                        file.resume();
+                    else
+                        file.retry();
+                });
+                $self.find('.flow-file-delete').on('click', function ($event) {
+                    $event.preventDefault();
+                    file.cancel();
+                    $self.remove();
+                });
+                $self.find('.flow-file-cancel').on('click', function ($event) {
+                    $event.preventDefault();
+                    file.cancel();
+                    $self.remove();
+                });
+                $self.find('.flow-file-resume').hide();
+                $self.find('.flow-file-delete').hide();
+            });
+
+            r.on('filesSubmitted', function(file) {
+                r.upload();
+            });
+
+            r.on('complete', function(){
+                // Hide pause/resume when the upload has completed
+                $('.flow-progress .progress-resume-link').hide();
+                $('.flow-progress .progress-pause-link').hide();
+                $('.flow-progress .progress-cancel-link').show();
+
+                if ($('.flow-file .error').length == 0) {
+                    $('.flow-progress').hide();
+                }
+            });
+
+            r.on('fileSuccess', function(file,message){
+                var $self = $('.flow-file-'+file.uniqueIdentifier);
+                // Reflect that the file upload has completed
+                $self.find('.flow-file-status').removeClass('error').text('Upload completed');
+                $self.find('.flow-file-pause, .flow-file-resume, .flow-file-cancel').remove();
+                //$self.find('.flow-file-delete').show();
+                //$self.find('.flow-file-download').attr('href', '/download/' + file.uniqueIdentifier).show();
+
+                setTimeout(function(){
+                    $self.animate({opacity: 0}, 1000, function(){
+                        $self.remove();
+                    });
+                }, 2000);
+            });
+
+            r.on('fileError', function(file, message){
+                // Reflect that the file upload has resulted in error
+                $('.flow-file-'+file.uniqueIdentifier+' .flow-file-status').addClass('error').text(message);
+                $('.flow-file-'+file.uniqueIdentifier+' .flow-file-pause').hide();
+                $('.flow-file-'+file.uniqueIdentifier+' .flow-file-resume').show();
+            });
+
+            r.on('fileProgress', function(file){
+                // Handle progress for both the file and the overall upload
+
+                $('.flow-file-'+file.uniqueIdentifier+' .flow-file-status')
+                    .html(Math.floor(file.progress()*100) + '% '
+                        + readablizeBytes(file.averageSpeed) + '/s '
+                        + secondsToStr(file.timeRemaining()) + ' remaining') ;
+
+                $('.flow-file-'+file.uniqueIdentifier+' .file-progress-bar').css({width:Math.floor(file.progress()*100) + '%'});
+
+                $('.progress-bar').css({width:Math.floor(r.progress()*100) + '%'});
+            });
+
+            r.on('uploadStart', function(){
+                // Show pause, hide resume
+                $('.flow-progress .progress-resume-link').hide();
+                $('.flow-progress .progress-pause-link').show();
+                $('.flow-progress .progress-cancel-link').show();
+            });
+
+            r.on('catchAll', function() {
+                //console.log.apply(console, arguments);
+            });
+
+            window.r = {
+                pause: function () {
+                    r.pause();
+                    // Show resume, hide pause
+                    $('.flow-file-resume').show();
+                    $('.flow-file-pause').hide();
+                    $('.flow-progress .progress-resume-link').show();
+                    $('.flow-progress .progress-pause-link').hide();
+                },
+                cancel: function() {
+                    r.cancel();
+                    $('.flow-file').remove();
+
+                    $('.flow-progress, .flow-list').hide();
+                },
+                upload: function() {
+                    $('.flow-file-pause').show();
+                    $('.flow-file-resume').hide();
+                    r.resume();
+                },
+                flow: r
+            };
+
+        })();
+
+        function readablizeBytes(bytes) {
+        var s = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
+        var e = Math.floor(Math.log(bytes) / Math.log(1024));
+        return (bytes / Math.pow(1024, e)).toFixed(2) + " " + s[e];
+    }
+
+        function secondsToStr (temp) {
+        function numberEnding (number) {
+            return (number > 1) ? 's' : '';
+        }
+        var years = Math.floor(temp / 31536000);
+        if (years) {
+            return years + ' year' + numberEnding(years);
+        }
+        var days = Math.floor((temp %= 31536000) / 86400);
+        if (days) {
+            return days + ' day' + numberEnding(days);
+        }
+        var hours = Math.floor((temp %= 86400) / 3600);
+        if (hours) {
+            return hours + ' hour' + numberEnding(hours);
+        }
+        var minutes = Math.floor((temp %= 3600) / 60);
+        if (minutes) {
+            return minutes + ' minute' + numberEnding(minutes);
+        }
+        var seconds = temp % 60;
+        return seconds + ' second' + numberEnding(seconds);
+    }
+
 	<?php endif;?>
 });	
 //]]>
@@ -479,7 +659,7 @@ $(document).ready(function() {
                 <li><a href="#" onclick="return $.MediaBrowser.changeview('content');" title="<?php echo translate('Content');?>"><span class="icon content"></span><?php echo translate("Content");?></a></li>                
             </ul>
         </li>
-        <?php if($allowedActions['settings'] === TRUE): ?><li><a href="#" onclick="return $.MediaBrowser.showLayer('settings');" class="settings" title="<?php echo translate('Settings');?>"><span><img src="img/settings.png" alt="<?php echo translate('Settings');?>" /></span></a></li><?php endif; ?>
+        <?php if($allowedActions['settings'] === TRUE): ?><li><a href="#" onclick="return $.MediaBrowser.showLayer('settings');" class="settings" title="<?php echo translate('Settings');?>"><span><img src="img/gear.png" alt="<?php echo translate('Settings');?>" /></span></a></li><?php endif; ?>
 		<li><a href="#" onclick="return $.MediaBrowser.showLayer('help');" class="help" title="<?php echo translate('Help');?>"><span><img src="img/help.png" alt="<?php echo translate('Help');?>" /></span></a></li>
     </ul>
 </div>
@@ -513,7 +693,7 @@ $(document).ready(function() {
             <h2><?php echo $rootname?></h2>
             <select id="filters">
                 <option value=""><?php echo translate("All files");?> (*.*)&nbsp;</option>
-                <option<?php echo (isset($_GET["filter"]) && $_GET["filter"] == "flash" ? ' selected="selected"' : '');?> value=".swf|.flv|.fla">Flash&nbsp;</option>
+                <?php /* <option<?php echo (isset($_GET["filter"]) && $_GET["filter"] == "flash" ? ' selected="selected"' : '');?> value=".swf|.flv|.fla">Flash&nbsp;</option> */ ?>
                 <option<?php echo (isset($_GET["filter"]) && $_GET["filter"] == "image" ? ' selected="selected"' : '');?> value=".bmp|.gif|.jpg|.jpeg|.png">Images&nbsp;</option>
                 <option<?php echo (isset($_GET["filter"]) && $_GET["filter"] == "media" ? ' selected="selected"' : '');?> value=".avi|.flv|.mov|.mp3|.mp4|.mpeg|.mpg|.ogg|.wav|.wma|.wmv">Media&nbsp;</option>
                 <?php
@@ -575,8 +755,8 @@ $(document).ready(function() {
 	                    <label for="newfoldername"><?php echo translate("Name of the new folder");?>: <input class="path border" type="text" name="foldername" id="foldername" /></label>
 	                </div>
 	                <div class="paddingtop10 height20 marginbottom5">
-	                    <button type="submit"><?php echo translate("Create folder");?></button>
-	                    <button type="button" onclick="$.MediaBrowser.hideLayer(); $.MediaBrowser.loadFolder($.MediaBrowser.currentFolder); return false;"><?php echo translate("Close");?></button>
+	                    <button class="btn" type="submit"><?php echo translate("Create folder");?></button>
+	                    <button class="btn" type="button" onclick="$.MediaBrowser.hideLayer(); $.MediaBrowser.loadFolder($.MediaBrowser.currentFolder); return false;"><?php echo translate("Close");?></button>
 	                </div>
 	            </div>
 	            </form>
@@ -593,35 +773,52 @@ $(document).ready(function() {
 		<?php if($allowedActions['upload'] === TRUE): ?>
         <div id="upload" class="layer">
             <h2><?php echo translate("Upload a new file")?></h2>
-            <a href="#" class="close" onclick="$.MediaBrowser.hideLayer(); $.MediaBrowser.loadFolder($.MediaBrowser.currentFolder); return false;">X</a>
+            <a href="#" class="close" onclick="r.cancel(); $.MediaBrowser.hideLayer(); $.MediaBrowser.loadFolder($.MediaBrowser.currentFolder); return false;">X</a>
             <hr />
             <div class="window">
-				<form id="form1" action="index.php" method="post" enctype="multipart/form-data">
-	                <div class="paddingtop10 paddingleft10 height20">
-	                    <label for="uploadpath"><?php echo translate("Currently uploading in folder");?>: <input class="path" type="text" name="uploadpath" id="uploadpath" readonly="readonly" /></label>
-	                </div>
-	                <div class="paddingtop10 paddingleft10 height20">
-	                    <?php echo translate("Select your file");?>: &nbsp;&nbsp;<span id="spanButtonPlaceHolder"></span>
-	                </div>
-	                <div class="padding10 height20"><?php echo sprintf(translate("Upload limited to %d MB!"), ($max_file_size_in_bytes/(1024*1024)));?></div>	                
-					<div class="fieldset flash" id="fsUploadProgress">
+
+                <div class="flow-error">
+                    Your browser, unfortunately, is not supported by Flow.js. The library requires support for <a href="http://www.w3.org/TR/FileAPI/">the HTML5 File API</a> along with <a href="http://www.w3.org/TR/FileAPI/#normalization-of-params">file slicing</a>.
+                </div>
+                <div class="flow-controls">
+                    <div class="flow-controls-inside">
+
+                        <div class="flow-uploadp">
+                            <label for="uploadpath"><?php echo translate("Currently uploading in folder");?>: <input class="path" type="text" name="uploadpath" id="uploadpath" readonly="readonly" /></label>
+                        </div>
+
+                        <div class="flow-browse">
+                            <input type="button" value="<?php echo translate("Select your file");?>" id="browse" class="btn" /> <?php echo translate("or Drag and Drop your files");?>
+                            <span class="note">(<?php echo sprintf(translate("Upload limited to %d MB!"), ($max_file_size_in_bytes/(1024*1024)));?>)</span>
+                        </div>
+
+                    <?php /*
+                        <div class="fieldset flash" id="fsUploadProgress">
 	                    <span class="legend"><?php echo translate("Upload queue");?></span>
 	                </div>
 	                <div class="paddingleft10">
 	                	<button id="btnCancel" type="button"><?php echo translate('Cancel all uploads');?></button>
 	                    <button type="button" onclick="$.MediaBrowser.hideLayer(); $.MediaBrowser.loadFolder($.MediaBrowser.currentFolder); return false;"><?php echo translate('Close');?></button>
 	                </div>
-					<div id="divLoadingContent" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
-			            SWFUpload is loading. Please wait a moment...
-			        </div>
-			        <div id="divLongLoading" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
-			            SWFUpload is taking a long time to load or the load has failed. Please make sure that the Flash Plugin is enabled and that a working version of the Adobe Flash Player is installed.
-			        </div>
-			        <div id="divAlternateContent" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
-			            We're sorry. SWFUpload could not load. You may need to install or upgrade Flash Player.
-			            Visit the <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe website</a> to get the Flash Player.
-			        </div>
-	            </form>
+                    */ ?>
+
+                    <div class="flow-progress" style="display: none">
+                        <div class="progress-container"><div class="progress-bar"></div></div>
+                        <div class="progress-pause">
+                            <a href="#" onclick="r.upload(); return(false);" class="btn btn-info progress-resume-link"><i class="icon-play icon-white"></i> Resume upload</a>
+                            <a href="#" onclick="r.pause(); return(false);" class="btn btn-info progress-pause-link"><i class="icon-pause icon-white"></i> Pause upload</a>
+                            <a href="#" onclick="r.cancel(); return(false);" class="btn btn-danger progress-cancel-link"><i class="icon-stop icon-white"></i> Cancel upload</a>
+                        </div>
+                        <div class="progress-text"></div>
+                    </div>
+
+                    <div class="flow-file-list">
+                        <ul class="flow-list"></ul>
+                    </div>
+
+
+                    </div>
+                </div>
 			</div>
         </div>
 		<?php endif; ?>
@@ -635,7 +832,7 @@ $(document).ready(function() {
 		<?php if($allowedActions['settings'] === TRUE): ?>
         <div id="settings" class="layer" style="display:none;">
             <h2><?php echo translate("Settings"); ?></h2>
-            <a href="#" class="close" onclick="$.MediaBrowser.hideLayer(); return false;" title="<?php echo translate('Close')?>"><?php echo translate("Close")?></a>
+            <a href="#" class="btn close" onclick="$.MediaBrowser.hideLayer(); return false;" title="<?php echo translate('Close')?>"><?php echo translate("Close")?></a>
             <hr />
             <div class="window">
             	<div class="padding10">
@@ -684,16 +881,18 @@ $(document).ready(function() {
         +++++++++++++++++++++++++++++++++
         -->
         <div id="help" class="layer" style="display:none;">
-            <h2>PDW File Browser v1.3 beta</h2>
+            <h2>PDW File Browser v1.4+</h2>
             <a href="#" class="close" onclick="$.MediaBrowser.hideLayer(); return false;" title="<?php echo translate("Close")?>"><?php echo translate("Close")?></a>
             <hr />
             <div class="window">
 				<div class="padding10">
 	                <p>Author: Guido Neele<br />
 	                Date: October 10, 2010<br />
+                    Date: June 24, 2018<br />
 	                Url: http://www.neele.name</p>
 	                <p>Copyright (c) 2010 Guido Neele</p>
-	                <p>Permission is hereby granted, free of charge, to any person obtaining a copy
+                    <p>Copyright (c) 2018 Maks T.</p>
+                    <p>Permission is hereby granted, free of charge, to any person obtaining a copy
 	                of this software and associated documentation files (the "Software"), to deal
 	                in the Software without restriction, including without limitation the rights
 	                to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -712,13 +911,13 @@ $(document).ready(function() {
 	                <ul>
 	                    <li>jQuery (jquery.com)</li>
 	                    <li>jQuery.contextmenu - Matt Kruse (javascripttoolbox.com)</li>
-	                    <li>SWFUpload - (swfupload.org)</li>
 	                    <li>Javascript functions urlencode/urldecode - (phpjs.org)</li>
+	                    <li>Flow.js is a JavaScript library providing multiple simultaneous, stable and resumable uploads via the HTML5 File API</li>
 	                    <li>createCookie - Peter-Paul Koch (http://www.quirksmode.org/js/cookies.html)</li>
 	                    <li>Javascript function printf - Dav Glass extension for the Yahoo UI Library</li>
 						<li>Modified version of Slimbox 2 - Christophe Beyls (http://www.digitalia.be)</li>
 	                </ul>
-	                <p><button type="button" onclick="$.MediaBrowser.hideLayer(); return false;"><?php echo translate("Close");?></button></p>
+	                <p><button type="button" class="btn" onclick="$.MediaBrowser.hideLayer(); return false;"><?php echo translate("Close");?></button></p>
 	            </div>
 			</div> 
         </div>
@@ -737,12 +936,17 @@ $(document).ready(function() {
         require_once("file_specs.php");
     ?>
     </div>
+
     <form id="fileform" name="fileform" onsubmit="$.MediaBrowser.insertFile(); return false;">
         <label for="file"><?php echo translate("File");?></label>
-        <input type="text" name="file" id="file" readonly="readonly" value="" />
-        <button type="submit"><?php echo translate("Insert");?></button>
+        <input type="text" name="file" id="file" readonly="readonly" value="" style="width: 400px;"/>
+
+        <?php if ($editor != "standalone"): ?>
+            <button type="submit"><?php echo translate("Insert");?></button>
+        <?php endif; ?>
+
 		<div>
-            <?php 
+            <?php
                 $checked = isset($_COOKIE["absoluteURL"]) ? $_COOKIE["absoluteURL"] : $absolute_url;
             ?>
 			<label for="absolute_url"><input class="checkbox" type="checkbox" id="absolute_url" <?php echo $absolute_url_disabled ? 'disabled="disabled" ' : '';?><?php echo $checked ? 'checked="checked" ' : '';?>/><?php echo translate("Absolute URL with hostname");?></label>

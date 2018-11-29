@@ -94,6 +94,8 @@ $lang = array(
     "Cookies need to be enabled to save your settings!"          => "Cookie musí být povoleny pro uložení vašeho nastavní!",
     "Save settings"                 => "Uložit nastavení",
     "Settings saved!"               => "Nastavení uloženo!",
+	
+	#"Absolute URL with hostname"    => "Absolute URL with hostname",
 
     "EOF" => TRUE
 );

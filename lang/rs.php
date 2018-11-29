@@ -93,6 +93,8 @@ $lang = array(
     "Cookies need to be enabled to save your settings!"          => "Колачићи морају бити укључени како бисте могли да сачувате подешавања!",
     "Save settings"                 => "Сачувајте подешавања",
     "Settings saved!"               => "Подешавања сачувана!",
+	
+	#"Absolute URL with hostname"    => "Absolute URL with hostname",
 
     "EOF" => TRUE
 );

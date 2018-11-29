@@ -17,7 +17,7 @@ div.ab ol li.root {background-image:none; background-position:left 1px; width:10
 div.ab ol li.root span {background:url(skins/mountainview/images/root.png) left -2px; }
 div.ab ol li.root {width:20px;}
 div.ab ol li a {color: #6D6D6D;}
-div.ab ol li a:hover { color:#FFF; background: #6688EE none; border-left:0; border-right:0; margin-right:2px; border-radius:3px; -moz-border-radius:3px;}
+div.ab ol li a:hover { color:#FFF; background: #6688EE none; border-left:0; border-right:0; padding: 1px 4px; border-radius:3px; -moz-border-radius:3px;}
 
 div#searchbar {background-image:none; background-position:right 1px; background-color:#FFF; border:1px solid #DDD; margin-top:-26px;}
 div#searchbar .cap {background-image:none; background-position:left 1px; width:2px;}
@@ -133,7 +133,7 @@ div#file-specs {background:#E3E9FF none; border-top: 1px solid #DDD;}
 div#file-specs form#fileform input { border-color:#DDD;}
 div#file-specs #info div {color:#000;}
 div#file-specs #info div span {color: #555;}
-div#file-specs #info div.icon.folder{ background-image: url(phpthumb/phpThumb.php?h=140&w=140&src=../skins/mountainview/images/256/folder.png&far=1);}
+div#file-specs #info div.icon.folder{ background-image: url(phpthumb/phpThumb.php?h=140&w=140&src=../skins/mountainview/images/256/folder.png&far=1&bg=0000FF);}
 div#file-specs #info div.filename input {border-color:transparent; color: #555;}
 div#file-specs #info div.filename input:hover {border-color:#ccc;}
 div#file-specs #info div.filetype {color: #555;}

@@ -5,11 +5,57 @@ Date: October 19, 2010
 Url: http://www.neele.name
 
 Copyright (c) 2010 Guido Neele
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 */
+
+error_reporting(0);
+ini_set('display_errors', '0');
 
 if(!isset($_SESSION)){ session_start();}  
 
-error_reporting(E_ALL);
+
+
+/*
+ * Uncomment lines below to enable PHP error reporting and displaying PHP errors.
+ * Do not do this on a production server. Might be helpful when debugging why PDW File Browser
+ * does not work as expected.
+ */
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+
+
+/**
+ * WARNING: You should do your authorization checking right here. config.php is included 
+ * in every file so checking it here is securing the whole plug-in. By not checking for 
+ * authorization you are allowing "anyone" to upload and list the files in your server. 
+ * You must implement some kind of session validation here. You could do something like...
+ *
+ * if (!(isset($_SESSION['IsAuthorized']) && $_SESSION['IsAuthorized'])){
+ *      die("You are not authorized!");
+ * }
+ *
+ * ... where $_SESSION['IsAuthorized'] is set to "true" as soon as the user logs in to your system.
+**/
+if (!(isset($_SESSION['AdminLoginData']['session']) && $_SESSION['AdminLoginData']['session'])){
+    die("You are not authorized!");
+}
 
 /*
  * UPLOAD PATH
@@ -22,7 +68,10 @@ error_reporting(E_ALL);
  * $uploadpath = '/images/upload/';
  *
  */
-$uploadpath = "/path/to/upload/folder/"; // absolute path from root to upload folder (DON'T FORGET SLASHES)
+
+$url = parse_url($_SERVER['REQUEST_URI']);
+$pos = strpos($url['path'], "filebrowser");
+$uploadpath = substr($url['path'], 0, $pos) . "files/";
 
 /*
  * DEFAULT TIMEZONE
@@ -67,7 +116,7 @@ $defaultLanguage = 'en';
  */
 $allowedActions = array(
     'upload' => TRUE,
-	'settings' => TRUE,
+	'settings' => FALSE,
     'cut_paste' => TRUE,
 	'copy_paste' => TRUE,
 	'rename' => TRUE,
@@ -113,7 +162,7 @@ define('DOCUMENTROOT', realpath((getenv('DOCUMENT_ROOT') && preg_match('#^'.preg
  * 
  * Which editor are we dealing with? PDW File Browser can be used with TinyMCE and CKEditor.
  */
-$editor = isset($_GET["editor"]) ? $_GET["editor"] : ''; // If you want to use the file browser for both editors and/or standalone
+$editor = isset($_GET["editor"]) ? $_GET["editor"] : 'standalone'; // If you want to use the file browser for both editors and/or standalone
 //$editor="tinymce";
 //$editor="ckeditor";
 //$editor="standalone";
@@ -124,40 +173,26 @@ $editor = isset($_GET["editor"]) ? $_GET["editor"] : ''; // If you want to use t
  * 
  */
 // Maximum file size
-$max_file_size_in_bytes = 1048576; // 1MB in bytes
+$max_file_size_in_bytes = 20 * 1048576; // 1MB in bytes
 
 // Characters allowed in the file name (in a Regular Expression format)               
-$valid_chars_regex = '.A-Z0-9_ !@#$%^&()+={}\[\]\',~`-';
+$valid_chars_regex = '.A-Z0-9_!@#$%^&()+={}\[\]\',~`-';
 
 // Allowed file extensions
 // Remove an extension if you don't want to allow those files to be uploaded.
-//$extension_whitelist = "7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip";
-$extension_whitelist = "asf,avi,bmp,fla,flv,gif,jpeg,jpg,mov,mpeg,mpg,png,tif,tiff,wmv"; // Images, video and flash only
+$extension_whitelist = "7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip";
+//$extension_whitelist = "asf,avi,bmp,fla,flv,gif,jpeg,jpg,mov,mpeg,mpg,png,tif,tiff,wmv"; // Images, video and flash only
 
 
 /*
- * RETURN LINKS AS ABSOLUTE OR RELATIVE
+ * RETURN LINKS AS ABSOLUTE OR RELATIVE OR ABSOLUTE WITHOUT HOSTNAME
  *
  * Ex. http://www.example.com/upload/file.jpg instead of /upload/file.jpg 
  */
-$absolute_url = FALSE; // When FALSE url will be returned relatieb, like /upload/file.jpg.
-$absolute_url_disabled = FALSE; // When TRUE changing from absolute to relative is not possible.
-
-
-
-
-
-
+$absolute_url = TRUE; // When FALSE url will be returned absolute without hostname, like /upload/file.jpg.
+$absolute_url_disabled = false; // When TRUE changing from absolute to relative is not possible.
 
 //--------------------------DON'T EDIT BEYOND THIS LINE ----------------------------------
-
-
-
-
-
-
-
-
 
 define('STARTINGPATH', DOCUMENTROOT . $uploadpath); //DON'T EDIT
 
@@ -205,4 +240,3 @@ $max_upload_size = min(let_to_num(ini_get('post_max_size')), let_to_num(ini_get(
 if ($max_file_size_in_bytes > $max_upload_size) {
     $max_file_size_in_bytes = $max_upload_size;
 }
-?>

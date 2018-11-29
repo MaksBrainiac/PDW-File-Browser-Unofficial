@@ -1,0 +1,217 @@
+
+/* Uploader: Drag & Drop */
+.flow-error {
+    background-color: #FFFF66;
+    border: solid 4px #FF9966;
+    margin: 10px 25px;
+    padding: 10px 15px;
+}
+.flow-controls {
+    padding: 10px;
+}
+.flow-browse {
+    margin: 10px 0;
+}
+.flodw-uploadp {
+    margin: 10px 0;
+}
+.flow-progress {
+    margin: 10px 0;
+}
+.progress-pause {
+    padding: 10px 0;
+}
+/*.flow-browse input {
+    text-transform: uppercase;
+
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
+.flow-browse input:hover {
+    text-decoration: none;
+    color: #fff;
+    background-color: #286090;
+    border-color: #204d74;
+}*/
+
+.flow-drop {padding:15px; font-size:13px; text-align:center; color:#666; font-weight:bold;background-color:#eee; border:2px dashed #aaa; border-radius:10px; margin-top:40px; z-index:9999; }
+.flow-dragover {padding:30px; color:#555; background-color:#ddd; border:1px solid #999;}
+
+.files-flow-dragover {
+    background-color: yellow !important;
+    background-image: none !important;
+}
+
+
+/* Uploader: Progress bar */
+
+.progress-container {
+    height:7px;
+    background:#9CBD94;
+    position:relative;
+}
+.file-progress-bar,
+.progress-bar {
+    position:absolute;
+    top:0;
+    left:0;
+    bottom:0;
+    background:#45913A;
+    width:0;
+}
+.progress-text {
+    font-size:11px;
+    line-height:9px;
+    padding-left:10px;
+}
+
+.flow-file {
+    padding: 5px 0;
+    width: 550px;
+}
+.flow-file .flow-file-name {
+    float: left;
+    width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-right: 5px;
+}
+.flow-file .flow-file-size {
+    float: left;
+    width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-right: 5px;
+}
+.flow-file .flow-file-actions {
+    float: right;
+    text-align: right;
+    width: 30px;
+    white-space: nowrap;
+}
+.flow-file .flow-file-progress {
+    clear: left;
+}
+.flow-file .flow-file-status {
+    clear: left;
+    font-weight: bold;
+}
+.flow-file .error {
+    color: red;
+}
+
+/* Uploader: List of items being uploaded */
+.flow-list {
+    overflow: auto;
+    display: none;
+}
+
+.flow-list span.icon {
+    padding: 0;
+    width: 16px;
+    display: inline-block;
+    float: left;
+    padding-right: 3px;
+}
+.flow-list .progress-container {
+    height: 3px;
+}
+
+/**
+ *  Details Layout icons
+**/
+.flow-list span.icon span{ display:block; background: url(img/16/icon.png) top left no-repeat; width: 16px; height: 16px; margin-top:2px; }
+/* Images */
+.flow-list span.icon span.image{ background-image: none;}
+.flow-list span.icon span.jpg,
+.flow-list span.icon span.jpeg{ background-image: url(img/16/jpg.png);}
+.flow-list span.icon span.gif,
+.flow-list span.icon span.png{ background-image: url(img/16/gif.png);}
+.flow-list span.icon span.bmp{ background-image: url(img/16/bmp.png);}
+.flow-list span.icon span.tif,
+.flow-list span.icon span.tiff{ background-image: url(img/16/tiff.png);}
+/* Movies */
+.flow-list span.icon span.mov{ background-image: url(img/16/mov.png);}
+.flow-list span.icon span.mpeg,
+.flow-list span.icon span.mpg{ background-image: url(img/16/mpeg.png);}
+.flow-list span.icon span.avi{ background-image: url(img/16/avi.png);}
+.flow-list span.icon span.flv{ background-image: url(img/16/flv.png);}
+.flow-list span.icon span.wmv{ background-image: url(img/16/wmv.png);}
+/* Audio */
+.flow-list span.icon span.mp3{ background-image: url(img/16/mp3.png);}
+.flow-list span.icon span.wav{ background-image: url(img/16/wav.png);}
+.flow-list span.icon span.wma{ background-image: url(img/16/wma.png);}
+/* Web */
+.flow-list span.icon span.asp{ background-image: url(img/16/asp.png);}
+.flow-list span.icon span.aspx{ background-image: url(img/16/aspx.png);}
+.flow-list span.icon span.css{ background-image: url(img/16/css.png);}
+.flow-list span.icon span.html,
+.flow-list span.icon span.htm{ background-image: url(img/16/html.png);}
+.flow-list span.icon span.class,
+.flow-list span.icon span.jar,
+.flow-list span.icon span.java{ background-image: url(img/16/java.png);}
+.flow-list span.icon span.js{ background-image: url(img/16/js.png);}
+.flow-list span.icon span.php{ background-image: url(img/16/php.png);}
+.flow-list span.icon span.xml{ background-image: url(img/16/xml.png);}
+/* Adobe */
+.flow-list span.icon span.eps{ background-image: url(img/16/eps.png);}
+.flow-list span.icon span.pdf{ background-image: url(img/16/pdf.png);}
+.flow-list span.icon span.psd{ background-image: url(img/16/psd.png);}
+.flow-list span.icon span.swf{ background-image: url(img/16/swf.png);}
+/* Microsoft */
+.flow-list span.icon span.doc,
+.flow-list span.icon span.docx{ background-image: url(img/16/doc.png);}
+.flow-list span.icon span.exe{ background-image: url(img/16/exe.png);}
+.flow-list span.icon span.folder{ background-image: url(img/16/folder.png);}
+.flow-list span.icon span.mdb{ background-image: url(img/16/mdb.png);}
+.flow-list span.icon span.ppt,
+.flow-list span.icon span.pptx{ background-image: url(img/16/ppt.png);}
+.flow-list span.icon span.xls,
+.flow-list span.icon span.xlsx{ background-image: url(img/16/xls.png);}
+/* Lettertype */
+.flow-list span.icon span.otf{ background-image: url(img/16/font.png);}
+.flow-list span.icon span.ttf{ background-image: url(img/16/ttf.png);}
+/* Archives */
+.flow-list span.icon span.tgz,
+.flow-list span.icon span.tar,
+.flow-list span.icon span.rar,
+.flow-list span.icon span.zip,
+.flow-list span.icon span.gz{ background-image: url(img/16/zip.png);}
+
+
+.uploader-item {width:148px; height:90px; background-color:#666; position:relative; border:2px solid black; float:left; margin:0 6px 6px 0;}
+.uploader-item-thumbnail {width:100%; height:100%; position:absolute; top:0; left:0;}
+.uploader-item img.uploader-item-thumbnail {opacity:0;}
+.uploader-item-creating-thumbnail {padding:0 5px; font-size:9px; color:white;}
+.uploader-item-title {position:absolute; font-size:9px; line-height:11px; padding:3px 50px 3px 5px; bottom:0; left:0; right:0; color:white; background-color:rgba(0,0,0,0.6); min-height:27px;}
+.uploader-item-status {position:absolute; bottom:3px; right:3px;}
+
+/* Uploader: Hover & Active status */
+.uploader-item:hover, .is-active .uploader-item {border-color:#4a873c; cursor:pointer; }
+.uploader-item:hover .uploader-item-title, .is-active .uploader-item .uploader-item-title {background-color:rgba(74,135,60,0.8);}
+
+/* Uploader: Error status */
+.is-error .uploader-item:hover, .is-active.is-error .uploader-item {border-color:#900;}
+.is-error .uploader-item:hover .uploader-item-title, .is-active.is-error .uploader-item .uploader-item-title {background-color:rgba(153,0,0,0.6);}
+.is-error .uploader-item-creating-thumbnail {display:none;}
